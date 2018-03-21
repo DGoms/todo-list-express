@@ -1,4 +1,8 @@
-class HttpError extends Error {
+export class HttpError extends Error {
+    public type: string;
+    public status: number;
+    public message: string;
+
     toJSON() {
         const stack = process.env.NODE_ENV === 'development' ? this.stack : undefined
         return {
@@ -9,7 +13,7 @@ class HttpError extends Error {
     }
 }
 
-class NotFoundError extends HttpError {
+export class NotFoundError extends HttpError {
     constructor(message = 'Not found', type = 'NOT_FOUND') {
         super(message)
         this.status = 404
@@ -17,7 +21,7 @@ class NotFoundError extends HttpError {
     }
 }
 
-class BadRequestError extends HttpError {
+export class BadRequestError extends HttpError {
     constructor(message = 'Bad request', type = 'BAD_REQUEST') {
         super(message)
         this.status = 400
@@ -25,12 +29,10 @@ class BadRequestError extends HttpError {
     }
 }
 
-class ServerError extends HttpError {
+export class ServerError extends HttpError {
     constructor(message = 'Server Error', type = 'SERVER_ERROR') {
         super(message)
         this.status = 500
         this.type = type
     }
 }
-
-module.exports = {HttpError, NotFoundError, BadRequestError, ServerError};

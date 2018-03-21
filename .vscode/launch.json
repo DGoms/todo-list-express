@@ -4,21 +4,18 @@
     // Pour plus d'informations, visitez : https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-    {
-        "type": "node",
-        "request": "launch",
-        "name": "nodemon",
-        "runtimeExecutable": "nodemon",
-        "program": "${workspaceFolder}/src/app.js",
-        "restart": true,
-        "console": "integratedTerminal",
-        "internalConsoleOptions": "neverOpen"
-    },
         {
             "type": "node",
             "request": "launch",
-            "name": "Lancer le programme",
-            "program": "${workspaceFolder}/src/app.js"
-        }
+            "name": "nodemon",
+            "runtimeExecutable": "nodemon",
+            "args": ["${workspaceFolder}/src/app.ts"],
+            "runtimeArgs": ["--no-lazy", "-r", "ts-node/register"],
+            "sourceMaps": true,
+            "cwd": "${workspaceRoot}",
+            "protocol": "inspector",
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
+      }
     ]
 }
