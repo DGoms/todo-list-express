@@ -12,8 +12,18 @@ app
     .get('/', async (req, res, next) => {
         let limit = +req.query.limit || 25;
         let offset = +req.query.offset || 0;
+        let completion = req.query.completion;
+        
+        let where; 
+        if(completion)
+            where = {completion}
+        
 
-        let todos = await Todo.findAll({ limit, offset });
+        let todos = await Todo.findAll({ 
+            limit, 
+            offset,
+            where
+        });
 
         res.format({
             html: () => { res.send('todo') },
