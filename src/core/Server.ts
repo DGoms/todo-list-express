@@ -1,7 +1,7 @@
 import * as express from 'express'
 import * as bodyParser from 'body-parser';
-import {HttpError, ServerError, NotFoundError} from '../utils/error';
-import { Router } from './Router';
+import {HttpError, ServerError, NotFoundError} from '../utils/Error';
+import { MyRouter } from './Router';
 
 export class Server{
     private app: express.Express;
@@ -14,7 +14,7 @@ export class Server{
         this.app.use(bodyParser.json());
         this.app.use(bodyParser.urlencoded({ extended: true }))
 
-        this.app.use(Router.getRouter());
+        this.app.use(MyRouter.getRouter());
 
         this.app.use((req, res, next) => {
             throw new NotFoundError()

@@ -1,22 +1,36 @@
-import * as express from 'express'
+import { Router } from 'express'
+import { TodoController } from '../controller/TodoController';
 
-export class Router{
-    private router: express.Router;
+export class MyRouter {
+    private router: Router;
 
-    public static getRouter(){
-        return new Router().router;
+    public static getRouter() {
+        return new MyRouter().router;
     }
 
-    constructor(){
-        this.router = express.Router();
+    constructor() {
+        this.router = Router();
 
         this.router.all('/', function (req, res) {
             res.redirect('/todos');
         })
-        
-        this.router.use(require('../controller/todo').prefixUrl, require('../controller/todo'))
-        
+
+        this.router.use(TodoController.baseUrl, this.todoRouter());
+
     }
 
-    
+    private todoRouter(): Router {
+        let router = Router();
+        let todo = new TodoController();
+
+        return router
+            .get('/', todo.index)
+            .post('/', todo.create)
+            .all('/:todoId', todo.parseId)
+            .get('/:todoId', todo.show)
+            .patch('/:todoId', todo.update)
+            .delete('/:todoId', todo.delete)
+    }
+
+
 }
