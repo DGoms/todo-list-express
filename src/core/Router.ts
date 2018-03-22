@@ -25,9 +25,11 @@ export class MyRouter {
 
         return router
             .get('/', todo.index)
+            .get('/add', todo.add)
             .post('/', todo.create)
             .all('/:todoId', todo.parseId)
             .get('/:todoId', todo.show)
+            .get('/:todoId', todo.edit)
             .patch('/:todoId', todo.update)
             .delete('/:todoId', todo.delete)
     }

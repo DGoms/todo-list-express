@@ -20,5 +20,5 @@ export class Todo extends Model<Todo>{
     createdAt: Date;
 
     @UpdatedAt
-    UpdatedAt: Date;
+    updatedAt: Date;
 }
