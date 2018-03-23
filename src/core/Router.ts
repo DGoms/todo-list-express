@@ -27,10 +27,11 @@ export class MyRouter {
             .get('/', todo.index)
             .get('/add', todo.add)
             .post('/', todo.create)
-            .all('/:todoId', todo.parseId)
+            .all(/(\d+)/, todo.parseId)
             .get('/:todoId', todo.show)
-            .get('/:todoId', todo.edit)
+            .all('/:todoId/edit', todo.edit)
             .patch('/:todoId', todo.update)
+            .get('/:todoId/delete', todo.delete)
             .delete('/:todoId', todo.delete)
     }
 

@@ -11,6 +11,7 @@
             "runtimeExecutable": "nodemon",
             "args": ["${workspaceFolder}/src/app.ts"],
             "runtimeArgs": ["--no-lazy", "-r", "ts-node/register"],
+            "restart": true,
             "sourceMaps": true,
             "cwd": "${workspaceRoot}",
             "protocol": "inspector",

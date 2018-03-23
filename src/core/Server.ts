@@ -12,7 +12,10 @@ export class Server{
         this.port = port || 8080;
 
         this.app.use(bodyParser.json());
-        this.app.use(bodyParser.urlencoded({ extended: true }))
+        this.app.use(bodyParser.urlencoded({ extended: true }));
+
+        this.app.set('view engine', 'twig')
+        this.app.set('views', __dirname + '/../views/')
 
         this.app.use(MyRouter.getRouter());
 

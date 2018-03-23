@@ -1,0 +1,17 @@
+{% extends '../base.twig' %}
+{% block content %}
+    <div class="col-md-12 align-items-center p-3 my-3 bg-primary text-white rounded box-shadow">
+        <h6 class="m-0">Todo : {{ todo.id }}</h6>
+    </div>
+    <div class="col-md-12 rounded box-shadow bg-light">
+        <h3 class="p-3 border-bottom">{{ todo.message }}</h3>
+        <p class="font-weight-bold">Status : {{todo.completion}}</p>
+        <p>Created : {{todo.createdAt}}</p>
+        <p>Last update : {{todo.updatedAt}}</p>
+
+        <div class="btn-group align-items-right w-100" role="group">
+            <a href="{{ "/todos/" ~ todo.id ~ "/edit" }}" class="btn btn-primary btn-raised mr-3" role="button">Edit</a>
+            <a href="{{ "/todos/" ~ todo.id ~ "/delete" }}" class="btn btn-danger btn-raised" role="button">Delete</a>
+        </div>
+    </div>
+{% endblock %}
