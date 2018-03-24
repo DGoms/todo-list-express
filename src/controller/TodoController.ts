@@ -1,14 +1,21 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction, Router } from "express";
 import { Todo } from "../models/Todo";
 import { BadRequestError, NotFoundError, ServerError } from "../utils/Error";
+import { BaseController, IRoute, HttpMethod } from ".";
 
-export class TodoController {
-    public static readonly baseUrl = '/todos';
-    private static instance: TodoController;
+export class TodoController extends BaseController {
+    protected readonly baseUrl: string = "/todos";
 
-    constructor() {
-        TodoController.instance = this;
-    }
+    protected readonly routes: IRoute[] = [
+        { httpMethod: HttpMethod.GET, path:'/', action: this.index},
+        { httpMethod: HttpMethod.GET, path:'/add', action: this.add},
+        { httpMethod: HttpMethod.POST, path:'/', action: this.create},
+        { httpMethod: HttpMethod.GET, path:'/:todo', action: this.show},
+        { httpMethod: HttpMethod.GET, path:'/:todo/edit', action: this.edit},
+        { httpMethod: HttpMethod.PATCH, path:'/:todo', action: this.update},
+        { httpMethod: HttpMethod.GET, path:'/:todo/delete', action: this.delete},
+        { httpMethod: HttpMethod.DELETE, path:'/:todo', action: this.delete}
+    ];
 
     public async index(req: Request, res: Response, next: NextFunction) {
         let limit = +req.query.limit || 25;
@@ -31,7 +38,7 @@ export class TodoController {
     public async add(req: Request, res: Response, next: NextFunction) {
         res.render('todo/form', {
             title: "Add todo",
-            action: TodoController.baseUrl,
+            action: this.baseUrl,
             method: "POST"
         });
     }
@@ -49,19 +56,19 @@ export class TodoController {
         res.redirect('/todos/' + todo.id);
     }
 
-    public async parseId(req: Request, res: Response, next: NextFunction) {
-        let id = +req.params[0]
-        if (id != req.params[0]) return next(new BadRequestError('Id should be a number'))
+    // public async parseId(req: Request, res: Response, next: NextFunction) {
+    //     let id = +req.params[0]
+    //     if (id != req.params[0]) return next(new BadRequestError('Id should be a number'))
 
-        let todo = await Todo.findById(id).catch(next);
-        if (!todo) return next(new NotFoundError())
+    //     let todo = await Todo.findById(id).catch(next);
+    //     if (!todo) return next(new NotFoundError())
 
-        res.locals.todo = todo;
-        next();
-    }
+    //     res.locals.todo = todo;
+    //     next();
+    // }
 
     public show(req: Request, res: Response, next: NextFunction) {
-        let todo = res.locals.todo;
+        let todo = req.todo;
 
         res.format({
             html: () => { res.render('todo/show', { todo }) },
@@ -71,13 +78,13 @@ export class TodoController {
 
     public async edit(req: Request, res: Response, next: NextFunction) {
         if (req.body.message || req.body.completion)
-            await TodoController.instance.update(req, res, next);
+            await this.update(req, res, next);
         else {
             let todo = res.locals.todo
             res.render('todo/form', {
                 title: "Edit todo",
                 todo, 
-                action: TodoController.baseUrl + "/" + todo.id + "/edit",
+                action: this.baseUrl + "/" + todo.id + "/edit",
                 method: "POST"
             });
         }
@@ -103,7 +110,7 @@ export class TodoController {
         res.locals.alert = {status: "success", message: "Todo item deleted !"};
 
         res.format({
-            html: () => { TodoController.instance.index(req, res, next) },
+            html: () => { this.index(req, res, next) },
             json: () => { res.status(204); res.end() }
         })
     }

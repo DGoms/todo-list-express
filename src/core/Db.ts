@@ -8,7 +8,8 @@ export class Db extends Sequelize{
             username: 'root',
             password: '',
             modelPaths: [__dirname + '/../models'],
-            storage: './.sqlite',
+            //storage: './.sqlite',
+            storage: ':memory:',
             host: 'localhost'
         });
     }

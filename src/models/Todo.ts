@@ -1,4 +1,5 @@
-import { Table, Model, Column, PrimaryKey, AutoIncrement, CreatedAt, UpdatedAt } from 'sequelize-typescript';
+import { Table, Model, Column, PrimaryKey, AutoIncrement, CreatedAt, UpdatedAt, ForeignKey, BelongsTo } from 'sequelize-typescript';
+import { User } from './User';
 
 @Table({
     tableName: 'todos'
@@ -21,4 +22,11 @@ export class Todo extends Model<Todo>{
 
     @UpdatedAt
     updatedAt: Date;
+
+    @ForeignKey(() => User)
+    @Column
+    userId: number;
+    
+    @BelongsTo(() => User)
+    user: User;
 }
