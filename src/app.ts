@@ -11,8 +11,9 @@ db.sync().then(async () => {
     let todo1 = new Todo();
     todo1.message = "à faire";
     todo1.completion = "done";
-    todo1.user = user;
+    await todo1.$set('user', user);
     await todo1.save();
+
 
     server.start();
 });

@@ -8,14 +8,8 @@ export abstract class BaseController {
     protected readonly baseUrl: string = '/';
     protected readonly routes: IRoute[] = [];
 
-    protected static getInstance(): BaseController{
-        if(!BaseController.instance)
-            BaseController.instance = new (<any>this)();
-
-        return BaseController.instance;
-    }
-
     protected constructor() {
+        
     }
 
     public static init(router: Router): BaseController{

@@ -1,10 +1,8 @@
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import { HttpError, ServerError, NotFoundError, BadRequestError } from '../utils/Error';
-import { MyRouter } from './Router';
 import { BaseController, TodoController } from '../controller';
-import { Todo } from '../models/Todo';
-import { User } from '../models/User';
+import { Todo, User } from '../models';
 
 /**
  * Les options de lancement du serveur
@@ -37,7 +35,14 @@ export class Server {
      */
     public app: express.Application
 
-    public controllers: BaseController[] = [];
+    public static models: any[] = [
+        Todo,
+        User
+    ]
+
+    public static controllers: any[] = [
+        TodoController
+    ];
 
     constructor(options: ServerOptions = {}) {
         const defaults: ServerOptions = {
@@ -49,8 +54,12 @@ export class Server {
         this.app = express()
 
         this.addInitialMiddlewares();
-        this.addParams();
-        this.addRouting();
+        
+        let router = express.Router();
+        this.addParamModels(router);
+        this.addRoutingControllers(router);
+        this.app.use(router);
+
         this.addFallbackMiddleware();
     }
 
@@ -68,47 +77,26 @@ export class Server {
         this.app.set('views', __dirname + '/../views/')
     }
 
-    private addRouting() {
-        let router = express.Router();
-        this.controllers.push(TodoController.init(router));
-
-        this.app.use(router);
-
+    private addRoutingControllers(router: express.Router) {
+        for(let item of Server.controllers){
+            item.init(router);
+        }
     }
 
-    private addParams() {
-        let models = [
-            Todo,
-            User
-        ];
-
-        // for (let model of models) {
-        //     let modelName = model.name.toLowerCase();
-        //     this.app.param(modelName, (req: any, res: express.Response, next: express.NextFunction, id) => {
-        //         let _id = +id;
-        //         if (_id != id) return next(new BadRequestError('Id should be a number'))
-
-        //         model.findById(id).then((item: any) => {
-        //             if (!item) return next(new NotFoundError())
-        //             req[modelName] = item;
-        //             next();
-        //         }).catch(next);
-        //     });
-        // }
-        this.app.param('todo', function (req, res, next, id) {
-            console.log('CALLED ONLY ONCE');
-            next();
-          });
-            this.app.param('todo', (req: any, res: express.Response, next: express.NextFunction, id) => {
+    private addParamModels(router: express.Router) {
+        for (let model of Server.models) {
+            let modelName = model.name.toLowerCase();
+            router.param(modelName, (req: any, res: express.Response, next: express.NextFunction, id) => {
                 let _id = +id;
                 if (_id != id) return next(new BadRequestError('Id should be a number'))
 
-                Todo.findById(id).then((item: any) => {
+                model.scope('full').findOne(id).then((item: any) => {
                     if (!item) return next(new NotFoundError())
-                    req.todo = item;
+                    req[modelName] = item;
                     next();
                 }).catch(next);
             });
+        }
     }
 
     private addFallbackMiddleware() {

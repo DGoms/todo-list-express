@@ -1,8 +1,13 @@
-import { Table, Model, Column, PrimaryKey, AutoIncrement, CreatedAt, UpdatedAt, ForeignKey, BelongsTo } from 'sequelize-typescript';
+import { Table, Model, Column, PrimaryKey, AutoIncrement, CreatedAt, UpdatedAt, ForeignKey, BelongsTo, DefaultScope, Scopes } from 'sequelize-typescript';
 import { User } from './User';
 
 @Table({
     tableName: 'todos'
+})
+@Scopes({
+    full: {
+        include: [() => User]
+    }
 })
 export class Todo extends Model<Todo>{
 
@@ -29,4 +34,5 @@ export class Todo extends Model<Todo>{
     
     @BelongsTo(() => User)
     user: User;
+    
 }
