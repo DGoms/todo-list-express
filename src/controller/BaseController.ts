@@ -1,41 +1,77 @@
 import { Request, Response, NextFunction, Router, IRouterMatcher } from "express";
-import { Todo } from "../models/Todo";
+import * as Path from 'path';
 import { BadRequestError, NotFoundError, ServerError } from "../utils/Error";
-import { User } from "../models/User";
 
 export abstract class BaseController {
+    /**
+     * Singleton
+     * 
+     * @protected
+     * @static
+     * @type {BaseController}
+     * @memberof BaseController
+     */
     protected static instance: BaseController;
-    protected readonly baseUrl: string = '/';
-    protected readonly routes: IRoute[] = [];
 
-    protected constructor() {
+    /**
+     * Base url of routes
+     * 
+     * @protected
+     * @type {string}
+     * @memberof BaseController
+     */
+    protected static baseUrl: string = '';
+
+    /**
+     * Routes of the controller
+     * 
+     * @protected
+     * @type {IRoute[]}
+     * @memberof BaseController
+     */
+    protected static routes: IRoute[] = [];
+
+    protected constructor() {}
+
+    /**
+     * Init the controller and routes, finally return the controller instance
+     * 
+     * @static
+     * @param {Router} router 
+     * @returns {BaseController} 
+     * @memberof BaseController
+     */
+    public static init(router: Router): void{
         
+        this.configureRoute(router);
+
     }
 
-    public static init(router: Router): BaseController{
+    /**
+     * Add routes of the controllers to the router
+     * 
+     * @private
+     * @param {Router} router 
+     * @memberof BaseController
+     */
+    private static configureRoute(router: Router){
         let controller = new (<any>this)();
-        controller.configureRoute(router);
-        return controller;
-    }
+        let _router = router;
 
-    private configureRoute(router: Router){
         for(let route of this.routes){
-            let _router = router;
-            _router[route.httpMethod](this.baseUrl + route.path, (req, res, next) => {route.action(req, res, next)});
+            let path = route.path;
+            if(!route.root) path = Path.join(this.baseUrl, path);
+
+            _router[route.httpMethod](path, (req, res, next) => { controller[route.action](req, res, next)});
         }
     }
-
-    protected getUser(): User{
-        return null;
-    }
-
-    
 }
 
 export interface IRoute{
     httpMethod: HttpMethod;
     path: string;
     action: any;
+    root?: boolean
 }
 
 export enum HttpMethod{

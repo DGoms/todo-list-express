@@ -16,6 +16,7 @@
     "express": "^4.16.3",
     "express-session": "^1.15.6",
     "lodash": "^4.17.5",
+    "path": "^0.12.7",
     "reflect-metadata": "^0.1.12",
     "routing-controllers": "^0.7.7",
     "sequelize": "^4.37.3",

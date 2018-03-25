@@ -17,18 +17,26 @@ interface ServerOptions {
      * @type {number}
      */
     readonly port?: number
+
+    /**
+     * If the visitor need to be auth before enter on site
+     * 
+     * @type {boolean}
+     * @memberof ServerOptions
+     */
+    readonly needUserAuth?: boolean
 }
 export class Server {
     /**
-   * Les options qui ont été définies pour ce serveur
-   * 
-   * @type {ServerOptions}
-   * @memberof Server
-   */
+     * The server options
+     * 
+     * @type {ServerOptions}
+     * @memberof Server
+     */
     public options: ServerOptions
 
     /**
-     * Représente l'application Express du serveur
+     * Represente express application of the server
      * 
      * @type {express.Application}
      * @memberof Server
@@ -40,6 +48,13 @@ export class Server {
         User
     ]
 
+    /**
+     * lists of controllers whose routes we want to add
+     * 
+     * @static
+     * @type {any[]} Array of controllers
+     * @memberof Server
+     */
     public static controllers: any[] = [
         TodoController
     ];
@@ -47,6 +62,7 @@ export class Server {
     constructor(options: ServerOptions = {}) {
         const defaults: ServerOptions = {
             port: 8080,
+            needUserAuth: false,
         }
 
         this.options = { ...defaults, ...options }
@@ -54,7 +70,7 @@ export class Server {
         this.app = express()
 
         this.addInitialMiddlewares();
-        
+
         let router = express.Router();
         this.addParamModels(router);
         this.addRoutingControllers(router);
@@ -63,6 +79,11 @@ export class Server {
         this.addFallbackMiddleware();
     }
 
+    /**
+     * Start the server with the port defined in ServerOptions or use the default port 8080
+     * 
+     * @memberof Server
+     */
     public start() {
         this.app.listen(this.options.port, () => {
             console.log(`http://localhost:${this.options.port}`);
@@ -78,8 +99,9 @@ export class Server {
     }
 
     private addRoutingControllers(router: express.Router) {
-        for(let item of Server.controllers){
-            item.init(router);
+        for (let item of Server.controllers) {
+            if (item.__proto__.name === BaseController.name)
+                item.init(router);
         }
     }
 
