@@ -8,14 +8,14 @@ export class TodoController extends BaseController {
     protected static baseUrl: string = "/todos";
 
     protected static routes: IRoute[] = [
-        { httpMethod: HttpMethod.GET, path:'/', action: 'index'},
-        { httpMethod: HttpMethod.GET, path:'/add', action: 'add'},
-        { httpMethod: HttpMethod.POST, path:'/', action: 'create'},
-        { httpMethod: HttpMethod.GET, path:'/:todo', action: 'show'},
-        { httpMethod: HttpMethod.GET, path:'/:todo/edit', action: 'edit'},
-        { httpMethod: HttpMethod.PATCH, path:'/:todo', action: 'update'},
-        { httpMethod: HttpMethod.GET, path:'/:todo/delete', action: 'delete'},
-        { httpMethod: HttpMethod.DELETE, path:'/:todo', action: 'delete'}
+        { httpMethod: HttpMethod.GET, path: '/', action: 'index' },
+        { httpMethod: HttpMethod.GET, path: '/add', action: 'add' },
+        { httpMethod: HttpMethod.POST, path: '/', action: 'create' },
+        { httpMethod: HttpMethod.GET, path: '/:todo', action: 'show' },
+        { httpMethod: HttpMethod.GET, path: '/:todo/edit', action: 'edit' },
+        { httpMethod: HttpMethod.PATCH, path: '/:todo', action: 'update' },
+        { httpMethod: HttpMethod.GET, path: '/:todo/delete', action: 'delete' },
+        { httpMethod: HttpMethod.DELETE, path: '/:todo', action: 'delete' }
     ];
 
     public async index(req: Request, res: Response, next: NextFunction) {
@@ -39,8 +39,7 @@ export class TodoController extends BaseController {
     public async add(req: Request, res: Response, next: NextFunction) {
         res.render('todo/form', {
             title: "Add todo",
-            action: TodoController.baseUrl,
-            method: "POST"
+            action: TodoController.baseUrl
         });
     }
 
@@ -67,16 +66,13 @@ export class TodoController extends BaseController {
     }
 
     public async edit(req: MyRequest, res: Response, next: NextFunction) {
-        if (req.body.message || req.body.completion)
-            await this.update(req, res, next);
-        else {
-            let todo = req.todo
-            res.render('todo/form', {
-                title: "Edit todo",
-                todo, 
-                method: "POST"
-            });
-        }
+        let todo = req.todo
+        res.render('todo/form', {
+            title: "Edit todo",
+            todo,
+            action: TodoController.baseUrl,
+            method: HttpMethod.PATCH
+        });
     }
 
     public async update(req: MyRequest, res: Response, next: NextFunction) {
@@ -96,7 +92,7 @@ export class TodoController extends BaseController {
     public async delete(req: MyRequest, res: Response, next: NextFunction) {
         let todo: Todo = req.todo;
         await todo.destroy().catch(next);
-        res.locals.alert = {status: "success", message: "Todo item deleted !"};
+        res.locals.alert = { status: "success", message: "Todo item deleted !" };
 
         res.format({
             html: () => { this.index(req, res, next) },

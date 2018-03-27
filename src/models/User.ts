@@ -1,4 +1,5 @@
-import { Table, Model, Column, PrimaryKey, AutoIncrement, CreatedAt, UpdatedAt, HasMany, DefaultScope, Scopes } from 'sequelize-typescript';
+import { Table, Model, Column, PrimaryKey, AutoIncrement, CreatedAt, UpdatedAt, HasMany, DefaultScope, Scopes, Unique } from 'sequelize-typescript';
+import * as bcrypt from 'bcrypt';
 import { Todo } from './Todo';
 
 @Table({
@@ -16,11 +17,18 @@ export class User extends Model<User>{
     @Column
     id: number;
 
+    @Unique
     @Column
     username: string;
 
     @Column
-    password: string;
+    get password(): string{
+        return this.getDataValue('password');
+    }
+
+    set password(value: string){
+        this.setDataValue('password', bcrypt.hashSync(value, 10));
+    }
 
     @CreatedAt
     createdAt: Date;
@@ -30,4 +38,6 @@ export class User extends Model<User>{
 
     @HasMany(() => Todo)
     todos: Todo[];
+
+
 }

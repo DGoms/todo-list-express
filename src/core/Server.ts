@@ -1,7 +1,9 @@
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
+import * as methodOverride from 'method-override';
+import * as session from 'express-session';
 import { HttpError, ServerError, NotFoundError, BadRequestError } from '../utils/Error';
-import { BaseController, TodoController } from '../controller';
+import { BaseController, TodoController, UserController } from '../controller';
 import { Todo, User } from '../models';
 
 /**
@@ -24,7 +26,7 @@ interface ServerOptions {
      * @type {boolean}
      * @memberof ServerOptions
      */
-    readonly needUserAuth?: boolean
+    // readonly needUserAuth?: boolean
 }
 export class Server {
     /**
@@ -56,13 +58,13 @@ export class Server {
      * @memberof Server
      */
     public static controllers: any[] = [
+        UserController,
         TodoController
     ];
 
     constructor(options: ServerOptions = {}) {
         const defaults: ServerOptions = {
             port: 8080,
-            needUserAuth: false,
         }
 
         this.options = { ...defaults, ...options }
@@ -94,8 +96,21 @@ export class Server {
         this.app.use(bodyParser.json());
         this.app.use(bodyParser.urlencoded({ extended: true }));
 
+        this.app.use(methodOverride(function (req, res) {
+            if (req.body && typeof req.body === 'object' && '_method' in req.body) {
+                // look in urlencoded POST bodies and delete it
+                var method = req.body._method
+                delete req.body._method
+                return method
+            }
+        }));
+
         this.app.set('view engine', 'twig')
         this.app.set('views', __dirname + '/../views/')
+
+        this.app.use(session({
+            secret: 'its_raining_cats_&_dogs'
+        }))
     }
 
     private addRoutingControllers(router: express.Router) {

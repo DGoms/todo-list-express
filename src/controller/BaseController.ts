@@ -59,10 +59,12 @@ export abstract class BaseController {
         let _router = router;
 
         for(let route of this.routes){
+            let method = route.httpMethod || HttpMethod.ALL;
+
             let path = route.path;
             if(!route.root) path = Path.join(this.baseUrl, path);
 
-            _router[route.httpMethod](path, (req, res, next) => { controller[route.action](req, res, next)});
+            _router[method](path, (req, res, next) => { controller[route.action](req, res, next)});
         }
     }
 }
