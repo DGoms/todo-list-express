@@ -5,15 +5,5 @@ import { User, Todo } from './models';
 let server = new Server();
 let db = new Db();
 db.sync().then(async () => {
-    // let user = new User();
-    // await user.save();
-
-    // let todo1 = new Todo();
-    // todo1.message = "à faire";
-    // todo1.completion = "done";
-    // await todo1.$set('user', user);
-    // await todo1.save();
-
-
     server.start();
 });
