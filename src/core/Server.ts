@@ -3,7 +3,7 @@ import * as bodyParser from 'body-parser';
 import * as methodOverride from 'method-override';
 import * as session from 'express-session';
 import { HttpError, ServerError, NotFoundError, BadRequestError } from '../utils/Error';
-import { BaseController, TodoController, UserController } from '../controller';
+import { BaseController, TodoController, UserController, DefaultController } from '../controller';
 import { Todo, User } from '../models';
 
 /**
@@ -58,6 +58,7 @@ export class Server {
      * @memberof Server
      */
     public static controllers: any[] = [
+        DefaultController,
         UserController,
         TodoController
     ];

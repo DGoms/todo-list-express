@@ -31,7 +31,7 @@ export class TodoController extends BaseController {
         let todos = await Todo.findAll({ limit, offset, where }).catch(next);
 
         res.format({
-            html: () => { res.render('todo/index', { todos, alert: res.locals.alert }) },
+            html: () => { res.render('todo/list', { todos, alert: res.locals.alert }) },
             json: () => { res.send({ todos }) }
         })
     }

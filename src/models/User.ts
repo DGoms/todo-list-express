@@ -1,4 +1,4 @@
-import { Table, Model, Column, PrimaryKey, AutoIncrement, CreatedAt, UpdatedAt, HasMany, DefaultScope, Scopes, Unique } from 'sequelize-typescript';
+import { Table, Model, Column, PrimaryKey, AutoIncrement, CreatedAt, UpdatedAt, HasMany, DefaultScope, Scopes, Unique, Length } from 'sequelize-typescript';
 import * as bcrypt from 'bcrypt';
 import { Todo } from './Todo';
 
@@ -18,16 +18,19 @@ export class User extends Model<User>{
     id: number;
 
     @Unique
-    @Column
+    @Length({min: 5, max: 255, msg:"Username must be at least 6 characters"})
+    @Column({ allowNull: false })
     username: string;
 
+    @Length({min: 5, max: 255, msg: "Password must be at least 6 characters"})
     @Column
     get password(): string{
         return this.getDataValue('password');
     }
 
     set password(value: string){
-        this.setDataValue('password', bcrypt.hashSync(value, 10));
+        let password = value ? bcrypt.hashSync(value, 10) : undefined;
+        this.setDataValue('password', password);
     }
 
     @CreatedAt
