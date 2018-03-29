@@ -26,7 +26,7 @@ export class UserController extends BaseController{
             let user = await User.findOne({where: {username: this.req.body.username}}).catch(this.next);
             if(user){
                 if(bcrypt.compareSync(this.req.body.password, user.password)){
-                    this.user = user;
+                    this.setUser(user);
                     this.res.redirect('/');
                     return;
                 }
@@ -55,7 +55,7 @@ export class UserController extends BaseController{
                 user = new User(this.req.body);
                 let userSave = await user.save();
 
-                this.user = user;
+                this.setUser(user);
                 sent = true;
 
                 this.res.format({
@@ -84,7 +84,7 @@ export class UserController extends BaseController{
     }
 
     public logout(){
-        this.user = undefined;
+        this.setUser(undefined);
         this.res.redirect('/');
     }
 }

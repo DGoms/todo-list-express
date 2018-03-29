@@ -14,8 +14,8 @@ export class DefaultController extends BaseController{
         {httpMethod: HttpMethod.ALL, path: '/', action: 'redirectTodos'},
     ]
     
-    public checkLogin(){
-        if(this.user || this.req.path == '/login' || this.req.path == '/register'){
+    public async checkLogin(){
+        if(await this.getUser() || this.req.path == '/login' || this.req.path == '/register'){
             this.next();
         }
         else{this.res.redirect('/login');}

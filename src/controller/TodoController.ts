@@ -20,10 +20,11 @@ export class TodoController extends BaseController {
     public async index() {
         let limit = +this.req.query.limit || 25;
         let offset = +this.req.query.offset || 0;
+        // let page = +this.req.query.page || 1;
         let completion = this.req.query.completion;
 
         let where:any = {};
-        where['userId'] = this.user.id;
+        where['userId'] = (await this.getUser()).id;
         if (completion)
             where['completion'] = completion;
 
@@ -38,8 +39,7 @@ export class TodoController extends BaseController {
 
     public async add() {
         this.render('todo/form', {
-            title: "Add todo",
-            action: TodoController.baseUrl
+            title: "Add todo"
         });
     }
 
@@ -50,7 +50,7 @@ export class TodoController extends BaseController {
 
             if (!message || !completion) throw new BadRequestError(`missing parameters 'message' or 'completion'`);
 
-            let todo = await new Todo({ message, completion, userId: this.user.id }).save();
+            let todo = await new Todo({ message, completion, userId: (await this.getUser()).id }).save();
 
             this.res.redirect('/todos/' + todo.id);
         }catch(err){
@@ -73,7 +73,6 @@ export class TodoController extends BaseController {
         this.render('todo/form', {
             title: "Edit todo",
             todo,
-            action: TodoController.baseUrl,
             method: HttpMethod.PATCH
         });
     }

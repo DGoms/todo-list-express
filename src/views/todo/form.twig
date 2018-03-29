@@ -4,7 +4,7 @@
         <h6 class="m-0">{{ title }}</h6>
     </div>
     <div class="col-md-12 rounded box-shadow bg-light">
-        <form action="{{ action }}" method="POST">
+        <form action="/todos" method="POST">
             <div class="form-group bmd-form-group">
                 <label for="message" class="bmd-label-floating">Message</label>
                 <input type="text" class="form-control form-control-lg" id="message" name="message" value="{{ todo.message }}">

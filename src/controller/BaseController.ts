@@ -83,15 +83,16 @@ export abstract class BaseController {
         _this[action]();
     }
 
-    protected render(view: string, options?: any){
+    protected async render(view: string, options?: any){
         if(!options)
             options = {};
 
         options['app'] = {};
 
         //add user
-        if(this.user)
-            options['app']['user'] = this.user;
+        let user = await this.getUser();
+        if(user)
+            options['app']['user'] = user;
 
         this.res.render(view, options);
     }
@@ -104,9 +105,11 @@ export abstract class BaseController {
      * @type {User}
      * @memberof BaseController
      */
-    protected get user(): User{
-        if(this.req.session && this.req.session.user)
-            return this.req.session.user;
+    protected async getUser(): Promise<User>{
+        if(this.req.session && this.req.session.userId){
+            let user = await User.findOne(this.req.session.userId);
+            return user;
+        }
         else
             return null;
     }
@@ -117,8 +120,15 @@ export abstract class BaseController {
      * @protected
      * @memberof BaseController
      */
-    protected set user(user: User){
-        this.req.session.user = user;
+    protected setUser(userOrId: User|number){
+        let userId;
+
+        if(userOrId instanceof User)
+            userId = userOrId.id;
+        else
+            userId = userOrId;
+
+        this.req.session.userId = userId;
         this.req.session.save((err) => {
             if(err)
                 this.next(err);

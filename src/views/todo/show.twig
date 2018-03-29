@@ -6,12 +6,17 @@
     <div class="col-md-12 rounded box-shadow bg-light">
         <h3 class="p-3 border-bottom">{{ todo.message }}</h3>
         <p class="font-weight-bold">Status : {{todo.completion}}</p>
+        <p>Created by : {% if app.user.id == todo.user.id %}You{% else %}{{todo.user.username}}{% endif %}</p>
         <p>Created : {{todo.createdAt}}</p>
         <p>Last update : {{todo.updatedAt}}</p>
 
         <div class="btn-group align-items-right w-100" role="group">
             <a href="{{ "/todos/" ~ todo.id ~ "/edit" }}" class="btn btn-primary btn-raised mr-3" role="button">Edit</a>
-            <a href="{{ "/todos/" ~ todo.id ~ "/delete" }}" class="btn btn-danger btn-raised" role="button">Delete</a>
+            
+            <form method="POST" class="mb-0">
+                <input type="hidden" value="delete"/>
+                <button class="btn btn-danger btn-raised" type="submit">Delete</button>
+            </form>
         </div>
     </div>
 {% endblock %}
