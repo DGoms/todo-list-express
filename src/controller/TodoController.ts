@@ -1,6 +1,5 @@
-import { Request, Response, NextFunction, Router } from "express";
 import { Todo } from "../models/Todo";
-import { BadRequestError, NotFoundError, ServerError, MyRequest } from "../utils";
+import { BadRequestError } from "../utils";
 import { BaseController, IRoute, HttpMethod } from ".";
 
 export class TodoController extends BaseController {
@@ -18,56 +17,60 @@ export class TodoController extends BaseController {
         { httpMethod: HttpMethod.DELETE, path: '/:todo', action: 'delete' }
     ];
 
-    public async index(req: Request, res: Response, next: NextFunction) {
-        let limit = +req.query.limit || 25;
-        let offset = +req.query.offset || 0;
-        let completion = req.query.completion;
+    public async index() {
+        let limit = +this.req.query.limit || 25;
+        let offset = +this.req.query.offset || 0;
+        let completion = this.req.query.completion;
 
-        let where;
+        let where:any = {};
+        where['userId'] = this.user.id;
         if (completion)
-            where = { completion }
+            where['completion'] = completion;
 
 
-        let todos = await Todo.findAll({ limit, offset, where }).catch(next);
+        let todos = await Todo.findAll({ limit, offset, where }).catch(this.next);
 
-        res.format({
-            html: () => { res.render('todo/list', { todos, alert: res.locals.alert }) },
-            json: () => { res.send({ todos }) }
+        this.res.format({
+            html: () => { this.render('todo/list', { todos, alert: this.res.locals.alert }) },
+            json: () => { this.res.send({ todos }) }
         })
     }
 
-    public async add(req: Request, res: Response, next: NextFunction) {
-        res.render('todo/form', {
+    public async add() {
+        this.render('todo/form', {
             title: "Add todo",
             action: TodoController.baseUrl
         });
     }
 
-    public async create(req: Request, res: Response, next: NextFunction) {
-        let message = req.body.message;
-        let completion = req.body.completion;
+    public async create() {
+        try{
+            let message = this.req.body.message;
+            let completion = this.req.body.completion;
 
-        if (!message || !completion) return next(new BadRequestError(`missing parameters 'message' or 'completion'`));
+            if (!message || !completion) throw new BadRequestError(`missing parameters 'message' or 'completion'`);
 
-        let todo = new Todo({ message, completion });
+            let todo = await new Todo({ message, completion, userId: this.user.id }).save();
 
-        await todo.save().catch(next);
-
-        res.redirect('/todos/' + todo.id);
+            this.res.redirect('/todos/' + todo.id);
+        }catch(err){
+            this.next(err);
+        }
+        
     }
 
-    public show(req: MyRequest, res: Response, next: NextFunction) {
-        let todo = req.todo;
+    public show() {
+        let todo = this.req.todo;
 
-        res.format({
-            html: () => { res.render('todo/show', { todo }) },
-            json: () => { res.send({ todo }) }
+        this.res.format({
+            html: () => { this.render('todo/show', { todo }) },
+            json: () => { this.res.send({ todo }) }
         })
     }
 
-    public async edit(req: MyRequest, res: Response, next: NextFunction) {
-        let todo = req.todo
-        res.render('todo/form', {
+    public async edit() {
+        let todo = this.req.todo
+        this.render('todo/form', {
             title: "Edit todo",
             todo,
             action: TodoController.baseUrl,
@@ -75,28 +78,28 @@ export class TodoController extends BaseController {
         });
     }
 
-    public async update(req: MyRequest, res: Response, next: NextFunction) {
-        let todo = req.todo;
+    public async update() {
+        let todo = this.req.todo;
 
-        if (req.body.message)
-            todo.message = req.body.message;
+        if (this.req.body.message)
+            todo.message = this.req.body.message;
 
-        if (req.body.completion)
-            todo.completion = req.body.completion;
+        if (this.req.body.completion)
+            todo.completion = this.req.body.completion;
 
-        await todo.save().catch(next);
+        await todo.save().catch(this.next);
 
-        res.redirect('/todos/' + todo.id);
+        this.res.redirect('/todos/' + todo.id);
     }
 
-    public async delete(req: MyRequest, res: Response, next: NextFunction) {
-        let todo: Todo = req.todo;
-        await todo.destroy().catch(next);
-        res.locals.alert = { status: "success", message: "Todo item deleted !" };
+    public async delete() {
+        let todo: Todo = this.req.todo;
+        await todo.destroy().catch(this.next);
+        this.res.locals.alert = { status: "success", message: "Todo item deleted !" };
 
-        res.format({
-            html: () => { this.index(req, res, next) },
-            json: () => { res.status(204); res.end() }
+        this.res.format({
+            html: () => { this.index() },
+            json: () => { this.res.status(204); this.res.end() }
         })
     }
 }

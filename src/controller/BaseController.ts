@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction, Router, IRouterMatcher } from "express";
 import * as Path from 'path';
 import { BadRequestError, NotFoundError, ServerError } from "../utils/Error";
+import { MyRequest } from "../utils";
+import { User } from "../models";
 
 export abstract class BaseController {
     /**
@@ -31,6 +33,10 @@ export abstract class BaseController {
      */
     protected static routes: IRoute[] = [];
 
+    protected req: MyRequest;
+    protected res: Response;
+    protected next: NextFunction;
+
     protected constructor() {}
 
     /**
@@ -55,7 +61,7 @@ export abstract class BaseController {
      * @memberof BaseController
      */
     private static configureRoute(router: Router){
-        let controller = new (<any>this)();
+        let controller:BaseController = new (<any>this)();
         let _router = router;
 
         for(let route of this.routes){
@@ -64,8 +70,59 @@ export abstract class BaseController {
             let path = route.path;
             if(!route.root) path = Path.join(this.baseUrl, path);
 
-            _router[method](path, (req, res, next) => { controller[route.action](req, res, next)});
+            _router[method](path, (req, res, next) => { controller.call(route.action, req, res, next)});
         }
+    }
+
+    public call(action: string, req: MyRequest, res: Response, next: NextFunction){
+        this.req = req;
+        this.res = res;
+        this.next = next;
+
+        let _this: any = this;
+        _this[action]();
+    }
+
+    protected render(view: string, options?: any){
+        if(!options)
+            options = {};
+
+        options['app'] = {};
+
+        //add user
+        if(this.user)
+            options['app']['user'] = this.user;
+
+        this.res.render(view, options);
+    }
+
+    /**
+     * Return the logged user or null
+     * 
+     * @readonly
+     * @protected
+     * @type {User}
+     * @memberof BaseController
+     */
+    protected get user(): User{
+        if(this.req.session && this.req.session.user)
+            return this.req.session.user;
+        else
+            return null;
+    }
+
+    /**
+     * Set user as the logged user
+     * 
+     * @protected
+     * @memberof BaseController
+     */
+    protected set user(user: User){
+        this.req.session.user = user;
+        this.req.session.save((err) => {
+            if(err)
+                this.next(err);
+        });
     }
 }
 

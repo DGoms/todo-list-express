@@ -23,7 +23,7 @@ export class User extends Model<User>{
     username: string;
 
     @Length({min: 5, max: 255, msg: "Password must be at least 6 characters"})
-    @Column
+    @Column({ allowNull: false })
     get password(): string{
         return this.getDataValue('password');
     }

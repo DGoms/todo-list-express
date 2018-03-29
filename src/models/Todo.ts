@@ -16,10 +16,10 @@ export class Todo extends Model<Todo>{
     @Column
     id: number;
 
-    @Column
+    @Column({allowNull: false})
     message: string;
 
-    @Column
+    @Column({allowNull: false})
     completion: string;
 
     @CreatedAt
@@ -29,10 +29,10 @@ export class Todo extends Model<Todo>{
     updatedAt: Date;
 
     @ForeignKey(() => User)
-    @Column
+    @Column({allowNull: false})
     userId: number;
     
     @BelongsTo(() => User)
     user: User;
-    
+
 }
