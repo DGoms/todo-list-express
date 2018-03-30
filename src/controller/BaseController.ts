@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction, Router, IRouterMatcher } from "express";
 import * as Path from 'path';
+import * as bcrypt from 'bcrypt';
+import { ValidationError, ValidationErrorItem } from "sequelize";
 import { BadRequestError, NotFoundError, ServerError } from "../utils/Error";
 import { MyRequest } from "../utils";
 import { User } from "../models";
@@ -39,12 +41,15 @@ export abstract class BaseController {
 
     protected constructor() {}
 
+    /* =============================================
+     *              Static
+     * ============================================= */ 
+
     /**
-     * Init the controller and routes, finally return the controller instance
+     * Init the controller and routes
      * 
      * @static
      * @param {Router} router 
-     * @returns {BaseController} 
      * @memberof BaseController
      */
     public static init(router: Router): void{
@@ -74,11 +79,20 @@ export abstract class BaseController {
         }
     }
 
+    protected static pathJoin(...paths: string[]){
+        return Path.join(this.baseUrl, ...paths);
+    }
+
+    /* =============================================
+     *              Non-Static
+     * ============================================= */ 
+
     public call(action: string, req: MyRequest, res: Response, next: NextFunction){
         this.req = req;
         this.res = res;
         this.next = next;
-
+//TODO
+this.setUser(1);
         let _this: any = this;
         _this[action]();
     }
@@ -95,6 +109,19 @@ export abstract class BaseController {
             options['app']['user'] = user;
 
         this.res.render(view, options);
+    }
+
+    protected isBodyEmpty(): boolean{
+        return this.req.body.constructor === Object && Object.keys(this.req.body).length === 0
+    }
+
+    protected handleValidationError(err: any): ValidationErrorItem[]{
+        if (err instanceof ValidationError) {
+            return (<ValidationError>err).errors;
+        }
+        else {
+            this.next(err);
+        }
     }
 
     /**
@@ -120,19 +147,29 @@ export abstract class BaseController {
      * @protected
      * @memberof BaseController
      */
-    protected setUser(userOrId: User|number){
-        let userId;
-
+    protected setUser(userOrId?: User|number){
         if(userOrId instanceof User)
-            userId = userOrId.id;
-        else
-            userId = userOrId;
+            userOrId = userOrId.id;
 
-        this.req.session.userId = userId;
+        this.req.session.userId = userOrId;
         this.req.session.save((err) => {
             if(err)
                 this.next(err);
         });
+    }
+
+    protected async checkAndSetUser(username: string, password: string): Promise<boolean>{
+        let isOk = false;
+
+        let user = await User.findOne({ where: { username: username } }).catch(this.next);
+        if (user) {
+            if (bcrypt.compareSync(password, user.password)) {
+                this.setUser(user);
+                isOk = true;
+            }
+        }
+
+        return isOk;
     }
 }
 

@@ -1,6 +1,8 @@
+import * as Path from 'path';
 import { Todo } from "../models/Todo";
-import { BadRequestError } from "../utils";
+import { BadRequestError, TodoStatus, TodoStatusUtil, ValidationErrorUtils } from "../utils";
 import { BaseController, IRoute, HttpMethod } from ".";
+import { ValidationError, ValidationErrorItem } from 'sequelize';
 
 export class TodoController extends BaseController {
 
@@ -37,26 +39,43 @@ export class TodoController extends BaseController {
         })
     }
 
-    public async add() {
+    public async add(validError?: ValidationError) {
+        let errors = validError ? validError.errors : undefined;
+
         this.render('todo/form', {
-            title: "Add todo"
+            title: "Add todo",
+            action: TodoController.baseUrl,
+            statusOptions: TodoStatus,
+            errors
         });
     }
 
     public async create() {
-        try{
-            let message = this.req.body.message;
-            let completion = this.req.body.completion;
+        let message: string = this.req.body.message;
+        let completion: TodoStatus = TodoStatusUtil.toEnum(this.req.body.completion);
 
-            if (!message || !completion) throw new BadRequestError(`missing parameters 'message' or 'completion'`);
+        let todoOrValidError = await new Todo({ 
+            message, 
+            completion, 
+            userId: (await this.getUser()).id 
+        }).save().catch((err) => {return err});
 
-            let todo = await new Todo({ message, completion, userId: (await this.getUser()).id }).save();
 
-            this.res.redirect('/todos/' + todo.id);
-        }catch(err){
-            this.next(err);
+        if(todoOrValidError instanceof Todo){
+            this.res.format({
+                html: () => { this.res.redirect(TodoController.pathJoin(todoOrValidError.id.toString())); },
+                json: () => { this.res.send({todo: todoOrValidError}); }
+            });
+        }else{
+            let validError: ValidationError = todoOrValidError;
+            this.res.format({
+                html: () => { 
+                    if(this.isBodyEmpty()) validError.errors = undefined;
+                    this.add(validError)
+                },
+                json: () => { this.next(new BadRequestError(ValidationErrorUtils.itemToString(validError.errors))) }
+            });    
         }
-        
     }
 
     public show() {
@@ -68,27 +87,45 @@ export class TodoController extends BaseController {
         })
     }
 
-    public async edit() {
-        let todo = this.req.todo
+    public async edit(validError?: ValidationError) {
+        let errors = validError ? validError.errors : undefined;
+        let todo = this.req.todo;
+
         this.render('todo/form', {
             title: "Edit todo",
+            action: TodoController.pathJoin(todo.id.toString()),
+            statusOptions: TodoStatus,
             todo,
-            method: HttpMethod.PATCH
+            method: HttpMethod.PATCH,
+            errors
         });
     }
 
     public async update() {
         let todo = this.req.todo;
+        let message: string = this.req.body.message;
+        let completion: TodoStatus = TodoStatusUtil.toEnum(this.req.body.completion) || TodoStatus.TODO;
 
-        if (this.req.body.message)
-            todo.message = this.req.body.message;
+        todo.message = message;
+        todo.completion = completion;
 
-        if (this.req.body.completion)
-            todo.completion = this.req.body.completion;
+        let todoOrValidError = await todo.save().catch((err)=>{return err});
 
-        await todo.save().catch(this.next);
-
-        this.res.redirect('/todos/' + todo.id);
+        if(todoOrValidError instanceof Todo){
+            this.res.format({
+                html: () => { this.res.redirect(TodoController.pathJoin(todoOrValidError.id.toString())); },
+                json: () => { this.res.send({todo: todoOrValidError}); }
+            });
+        }else{
+            let validError: ValidationError = todoOrValidError;
+            this.res.format({
+                html: () => { 
+                    if(this.isBodyEmpty()) validError.errors = undefined;
+                    this.edit(validError)
+                },
+                json: () => { this.next(new BadRequestError(ValidationErrorUtils.itemToString(validError.errors))) }
+            });    
+        }
     }
 
     public async delete() {

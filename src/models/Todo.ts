@@ -1,5 +1,6 @@
-import { Table, Model, Column, PrimaryKey, AutoIncrement, CreatedAt, UpdatedAt, ForeignKey, BelongsTo, DefaultScope, Scopes } from 'sequelize-typescript';
+import { Table, Model, Column, PrimaryKey, AutoIncrement, CreatedAt, UpdatedAt, ForeignKey, BelongsTo, DefaultScope, Scopes, Default, NotNull, AllowNull, DataType } from 'sequelize-typescript';
 import { User } from './User';
+import { TodoStatus, TodoStatusUtil } from '../utils';
 
 @Table({
     tableName: 'todos'
@@ -16,11 +17,24 @@ export class Todo extends Model<Todo>{
     @Column
     id: number;
 
-    @Column({allowNull: false})
+    @AllowNull(false)
+    @Column({
+        validate: {
+            notEmpty: {
+                msg: 'The message is required.'
+            }
+        }
+    })
     message: string;
+    
+    @Default(TodoStatus.TODO)
+    @AllowNull(false)
+    @Column({type: DataType.ENUM(TodoStatusUtil.toStringArray())})
+    completion: TodoStatus;
 
-    @Column({allowNull: false})
-    completion: string;
+    // @Default(true)
+    // @Column
+    // enabled: boolean;
 
     @CreatedAt
     createdAt: Date;

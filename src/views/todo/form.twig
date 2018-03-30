@@ -3,15 +3,31 @@
     <div class="col-md-12 align-items-center p-3 my-3 bg-primary text-white rounded box-shadow">
         <h6 class="m-0">{{ title }}</h6>
     </div>
+
+    <div class="col-md-12 mb-3">
+        {% for error in errors %}
+            <div class="alert alert-danger col-md-12" role="alert">
+                {{error.message}}
+            </div>
+        {% endfor %}
+    </div>
+
     <div class="col-md-12 rounded box-shadow bg-light">
-        <form action="/todos" method="POST">
+        <form action="{{action}}" method="POST">
             <div class="form-group bmd-form-group">
-                <label for="message" class="bmd-label-floating">Message</label>
+                <label for="message" class="bmd-label-floating" required>Message</label>
                 <input type="text" class="form-control form-control-lg" id="message" name="message" value="{{ todo.message }}">
             </div>
-            <div class="form-group bmd-form-group">
+            <div class="form-group bmd-form-group" required>
                 <label for="completion" class="bmd-label-floating">Completion</label>
-                <input type="text" class="form-control form-control-lg" id="completion" name="completion" value="{{ todo.completion }}">
+                {# <input type="text" class="form-control form-control-lg" id="completion" name="completion" value="{{ todo.completion }}"> #}
+                <select class="form-control form-control-lg" id="completion" name="completion">
+                    {% for item in statusOptions %}
+                        <option {% if item == todo.completion %}selected{% endif %}>
+                            {{item}}
+                        </option>
+                    {% endfor %}
+                </select>
             </div>
             {% if method %}<input type="hidden" id="_method" name="_method" value="{{method}}"/>{% endif %}
             

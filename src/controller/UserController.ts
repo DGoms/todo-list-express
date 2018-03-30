@@ -1,5 +1,5 @@
 import { BaseController, IRoute, HttpMethod } from ".";
-import { BadRequestError } from "../utils";
+import { BadRequestError, ValidationErrorUtils } from "../utils";
 import * as bcrypt from 'bcrypt';
 import { User } from "../models";
 import { ValidationError, ValidationErrorItem } from "sequelize";
@@ -10,81 +10,57 @@ import { ValidationError, ValidationErrorItem } from "sequelize";
  * @class UserController
  * @extends {BaseController}
  */
-export class UserController extends BaseController{
+export class UserController extends BaseController {
 
     protected static baseUrl: string = '/users';
     protected static routes: IRoute[] = [
-        {httpMethod: HttpMethod.ALL, path: '/login', action: 'login', root: true},
-        {httpMethod: HttpMethod.ALL, path: '/register', action: 'register', root: true},
-        {httpMethod: HttpMethod.ALL, path: '/logout', action: 'logout', root: true},
+        { httpMethod: HttpMethod.ALL, path: '/login', action: 'login', root: true },
+        { httpMethod: HttpMethod.ALL, path: '/register', action: 'register', root: true },
+        { httpMethod: HttpMethod.ALL, path: '/logout', action: 'logout', root: true },
     ]
 
-    public async login(){
+    public async login() {
         let errors: any[] = [];
 
-        if(this.req.body.username && this.req.body.password){
-            let user = await User.findOne({where: {username: this.req.body.username}}).catch(this.next);
-            if(user){
-                if(bcrypt.compareSync(this.req.body.password, user.password)){
-                    this.setUser(user);
-                    this.res.redirect('/');
-                    return;
-                }
-                else{
-                    errors.push({message: "Wrong username or password"});
-                }
-            }
-            else{
-                errors.push({message: "Wrong username or password"});
-            }
+        if (this.req.body.username && this.req.body.password) {
+            if(await this.checkAndSetUser(this.req.body.username, this.req.body.password))
+                this.res.redirect('/');
+            else
+                errors.push({ message: "Wrong username or password" });
         }
 
         this.res.format({
-            html: () => { this.render('user/form', {submit:"Login", errors}) },
-            json: () => { this.res.status(204); this.res.end() }
+            html: () => { this.render('user/form', { submit: "Login", errors }) },
+            json: () => { this.next(new BadRequestError(ValidationErrorUtils.itemToString(errors))) }
         })
     }
 
-    public async register(){
-        let user = new User();
-        let errors: ValidationErrorItem[];
-        let sent = false;
+    public async register() {
+        let user: User = new User(this.req.body);
+        // let validError: ValidationError = await user.validate().catch((err) => {return err});//FIX: pb avec validate qui fait un save, wtf ? O_o
+        let userOrValidError: ValidationError|User = await user.save().catch((err) => {return err});
 
-        try{
-            if(this.req.body.username && this.req.body.password){
-                user = new User(this.req.body);
-                let userSave = await user.save();
+        if(userOrValidError instanceof User){
+            this.setUser(userOrValidError);
 
-                this.setUser(user);
-                sent = true;
-
-                this.res.format({
-                    html: () => { this.res.redirect('/'); },
-                    json: () => { this.res.status(204); this.res.end(); }
-                });
-            }
-        }
-        catch(err){
-            if(err instanceof ValidationError){
-                let _err = <ValidationError> err;
-                errors = _err.errors;
-                user.password = undefined;
-            }
-            else{
-                this.next(err);
-            }
-        }
-        finally{
-            if(!sent)
-                this.res.format({
-                    html: () => { this.render('user/register', {submit:"Register", user, errors}) },
-                    json: () => { this.next(new BadRequestError(`missing parameters 'username' or 'password'`)) }
-                });
+            this.res.format({
+                html: () => { this.res.redirect('/'); },
+                json: () => { this.res.send({user: userOrValidError}); }
+            });
+        }else{
+            let validError: ValidationError = userOrValidError;
+            this.res.format({
+                html: () => { 
+                    if(this.isBodyEmpty()) validError.errors = undefined;
+                    this.render('user/register', { submit: "Register", user, errors: validError.errors }) 
+                },
+                json: () => { this.next(new BadRequestError(ValidationErrorUtils.itemToString(validError.errors))) }
+            });    
         }
     }
 
-    public logout(){
-        this.setUser(undefined);
+    public logout() {
+        this.setUser();
         this.res.redirect('/');
     }
 }
