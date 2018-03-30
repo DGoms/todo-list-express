@@ -128,11 +128,16 @@ export class Server {
                 let _id = +id;
                 if (_id != id) return next(new BadRequestError('Id should be a number'))
 
-                model.scope('full').findOne(id).then((item: any) => {
+                let handleDb = (item: any) => {
                     if (!item) return next(new NotFoundError())
                     req[modelName] = item;
                     next();
-                }).catch(next);
+                };
+
+                res.format({
+                    html: () => {model.scope('full').findOne(id).then(handleDb)},
+                    json: () => {model.findOne(id).then(handleDb)}
+                })
             });
         }
     }
