@@ -1,0 +1,30 @@
+<li class="list-group-item w-100 mb-2">
+    <form id="{{"formTodo" ~ todo.id }}" name="{{"formTodo" ~ todo.id }}" class="form-inline m-0" action="{{"/todos/" ~ todo.id ~ "/check"}}">
+        <div class="form-check form-check-inline m-0">
+            <input 
+                class="form-check-input" 
+                type="checkbox" 
+                id="checkbox" 
+                onClick="onCheckTodo({{todo.id}})"
+                {% if todo.completion == "done" %}checked{% endif %}
+            >
+            <input type="hidden" name="_method" value="patch"/>
+        </div>
+    </form>
+    <a href="{{ "/todos/" ~ todo.id }}" class="mr-auto">{{ todo.message }}</a>
+    <span 
+        class="
+        badge
+            {% if todo.completion == "todo" %}
+                badge-warning
+            {% elseif todo.completion == "in_progress" %}
+                badge-info
+            {% else %}
+                badge-success
+            {% endif %} 
+        badge-pill 
+        font-weight-bold 
+        text-capitalize"
+    >{{ todo.completion }}</span>
+</li>
+

@@ -3,8 +3,8 @@ import * as bodyParser from 'body-parser';
 import * as methodOverride from 'method-override';
 import * as session from 'express-session';
 import { HttpError, ServerError, NotFoundError, BadRequestError } from '../utils/Error';
-import { BaseController, TodoController, UserController, DefaultController } from '../controller';
-import { Todo, User } from '../models';
+import { BaseController, TodoController, UserController, DefaultController, TeamController } from '../controller';
+import { Todo, User, Team } from '../models';
 
 /**
  * Les options de lancement du serveur
@@ -47,7 +47,8 @@ export class Server {
 
     public static models: any[] = [
         Todo,
-        User
+        User,
+        Team
     ]
 
     /**
@@ -60,6 +61,7 @@ export class Server {
     public static controllers: any[] = [
         DefaultController,
         UserController,
+        TeamController,
         TodoController
     ];
 

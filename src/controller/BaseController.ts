@@ -147,8 +147,13 @@ this.setUser(1);
      */
     protected async getUser(): Promise<User>{
         if(this.req.session && this.req.session.userId){
-            let user = await User.findById(this.req.session.userId);
-            return user;
+            if(this.res.locals.user)
+                return this.res.locals.user;
+            else{
+                let user = await User.findById(this.req.session.userId);
+                this.res.locals.user = user;
+                return user;
+            }
         }
         else
             return null;

@@ -11,16 +11,29 @@
         <h6 class="m-0">All todos</h6>
     </div>
     <div class="col-md-12 rounded box-shadow">
-        <div class="list-group">
+        <ul class="list-group">
             {% for todo in todos %}
-                <a href="{{ "/todos/" ~ todo.id }}" class="list-group-item list-group-item-action w-100 bg-light mb-2">
-                    <span class="">{{ todo.message }}</span>
-                    <span class="ml-auto font-weight-bold">{{ todo.completion }}</span>
-                </a>
+                {% if (todo.completion == 'todo') or (todo.completion == 'in_progress') %}
+                    {% include './list_item.twig' with {'todo': todo} only %}
+                {% endif %}
+            {% endfor %}
+            {% for todo in todos %}
+                {% if todo.completion == 'done' %}
+                    {% include './list_item.twig' with {'todo': todo} only %}
+                {% endif %}
             {% endfor %}
             <a href="/todos/add" class="list-group-item list-group-item-action w-100 bg-light mb-2">
                 <i class="material-icons m-auto">add_circle</i>
             </a>
         </div>
     </div>
+{% endblock %}
+
+{% block javascript %}
+    <script>
+        function onCheckTodo(todoId){
+            console.log("onCheckTodo");
+            document['formTodo' + todoId].submit();
+        }
+    </script>
 {% endblock %}

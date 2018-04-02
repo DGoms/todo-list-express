@@ -9,16 +9,42 @@ export class TodoController extends BaseController {
     protected static baseUrl: string = "/todos";
 
     protected static routes: IRoute[] = [
-        { httpMethod: HttpMethod.GET, path: '/', action: 'index' },
+        { httpMethod: HttpMethod.GET, path: '/', action: 'listOfTeam' },
+        { httpMethod: HttpMethod.GET, path: '/me', action: 'listOfUser' },
         { httpMethod: HttpMethod.GET, path: '/add', action: 'add' },
         { httpMethod: HttpMethod.POST, path: '/', action: 'create' },
         { httpMethod: HttpMethod.GET, path: '/:todo', action: 'show' },
         { httpMethod: HttpMethod.GET, path: '/:todo/edit', action: 'edit' },
+        { httpMethod: HttpMethod.ALL, path: '/:todo/check', action: 'checkTodo' },
         { httpMethod: HttpMethod.PATCH, path: '/:todo', action: 'update' },
         { httpMethod: HttpMethod.DELETE, path: '/:todo', action: 'delete' }
     ];
 
-    public async index() {
+    public async listOfTeam() {
+        let user = await this.getUser();
+        if(!user.team){
+            this.listOfUser();
+        }else{
+            let limit = +this.req.query.limit || 25;
+            let offset = +this.req.query.offset || 0;
+            // let page = +this.req.query.page || 1;
+            let completion = this.req.query.completion;
+
+            let where:any = {};
+            where['teamId'] = user.teamId;
+            if (completion)
+                where['completion'] = completion;
+
+            let todos = await Todo.findAll({ limit, offset, where }).catch(this.next);
+
+            this.res.format({
+                html: () => { this.render('todo/list', { todos, alert: this.res.locals.alert }) },
+                json: () => { this.res.send({ todos }) }
+            })
+        }
+    }
+
+    public async listOfUser() {
         let limit = +this.req.query.limit || 25;
         let offset = +this.req.query.offset || 0;
         // let page = +this.req.query.page || 1;
@@ -28,7 +54,6 @@ export class TodoController extends BaseController {
         where['userId'] = (await this.getUser()).id;
         if (completion)
             where['completion'] = completion;
-
 
         let todos = await Todo.findAll({ limit, offset, where }).catch(this.next);
 
@@ -124,6 +149,20 @@ export class TodoController extends BaseController {
                 json: () => { this.next(new BadRequestError(ValidationErrorUtils.itemToString(validError.errors))) }
             });    
         }
+    }
+
+    public async checkTodo(){
+        let todo: Todo = this.req.todo;
+        let completion = TodoStatusUtil.toEnum(todo.completion);
+
+        if(completion == TodoStatus.DONE){
+            todo.completion = TodoStatus.TODO;
+        }else{
+            todo.completion = TodoStatus.DONE;
+        }
+        
+        await todo.save();
+        this.res.redirect('/');
     }
 
     public async delete() {
