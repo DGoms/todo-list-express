@@ -4,14 +4,6 @@
         <h6 class="m-0">{{ title }}</h6>
     </div>
 
-    <div class="col-md-12 mb-3">
-        {% for error in errors %}
-            <div class="alert alert-danger col-md-12" role="alert">
-                {{error.message}}
-            </div>
-        {% endfor %}
-    </div>
-
     <div class="col-md-12 rounded box-shadow bg-light">
         <form action="{{action}}" method="POST">
             <div class="form-group bmd-form-group">

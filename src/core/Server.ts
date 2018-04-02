@@ -128,7 +128,7 @@ export class Server {
                 let _id = +id;
                 if (_id != id) return next(new BadRequestError('Id should be a number'))
 
-                model.scope('full').findOne(id).then((item: any) => {
+                model.scope('full').findById(id).then((item: any) => {
                     if (!item) return next(new NotFoundError())
                     req[modelName] = item;
                     next();

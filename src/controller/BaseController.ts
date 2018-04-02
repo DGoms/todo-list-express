@@ -91,6 +91,7 @@ export abstract class BaseController {
         this.req = req;
         this.res = res;
         this.next = next;
+
 //TODO
 this.setUser(1);
         let _this: any = this;
@@ -100,7 +101,7 @@ this.setUser(1);
     protected async render(view: string, options?: any){
         if(!options)
             options = {};
-
+        
         options['app'] = {};
 
         //add user
@@ -108,6 +109,18 @@ this.setUser(1);
         if(user)
             options['app']['user'] = user;
 
+        //Add alert messages and delete from session
+        let successes = this.req.session.alert ? this.req.session.alert.successes : undefined;
+        let errors = this.req.session.alert ? this.req.session.alert.errors : undefined;
+        options['app']['alert'] = {
+            successes,
+            errors
+        }
+
+        this.req.session.alert = {};
+        await this.saveSession();
+        
+        
         this.res.render(view, options);
     }
 
@@ -134,7 +147,7 @@ this.setUser(1);
      */
     protected async getUser(): Promise<User>{
         if(this.req.session && this.req.session.userId){
-            let user = await User.findOne(this.req.session.userId);
+            let user = await User.findById(this.req.session.userId);
             return user;
         }
         else
@@ -152,10 +165,7 @@ this.setUser(1);
             userOrId = userOrId.id;
 
         this.req.session.userId = userOrId;
-        this.req.session.save((err) => {
-            if(err)
-                this.next(err);
-        });
+        this.saveSession().catch((err) => {this.next(err)});
     }
 
     protected async checkAndSetUser(username: string, password: string): Promise<boolean>{
@@ -170,6 +180,18 @@ this.setUser(1);
         }
 
         return isOk;
+    }
+
+    protected saveSession(): Promise<any>{
+        return new Promise((resolve, reject) => {
+            this.req.session.save((err) => {
+                if(!err){
+                    resolve();
+                }else{
+                    reject(err);
+                }
+            })
+        });
     }
 }
 

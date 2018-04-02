@@ -14,7 +14,7 @@
             <a href="{{ "/todos/" ~ todo.id ~ "/edit" }}" class="btn btn-primary btn-raised mr-3" role="button">Edit</a>
             
             <form method="POST" class="mb-0">
-                <input type="hidden" value="delete"/>
+                <input type="hidden" name="_method" value="delete"/>
                 <button class="btn btn-danger btn-raised" type="submit">Delete</button>
             </form>
         </div>

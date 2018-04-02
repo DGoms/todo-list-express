@@ -15,7 +15,6 @@ export class TodoController extends BaseController {
         { httpMethod: HttpMethod.GET, path: '/:todo', action: 'show' },
         { httpMethod: HttpMethod.GET, path: '/:todo/edit', action: 'edit' },
         { httpMethod: HttpMethod.PATCH, path: '/:todo', action: 'update' },
-        { httpMethod: HttpMethod.GET, path: '/:todo/delete', action: 'delete' },
         { httpMethod: HttpMethod.DELETE, path: '/:todo', action: 'delete' }
     ];
 
@@ -39,14 +38,11 @@ export class TodoController extends BaseController {
         })
     }
 
-    public async add(validError?: ValidationError) {
-        let errors = validError ? validError.errors : undefined;
-
+    public async add() {
         this.render('todo/form', {
             title: "Add todo",
             action: TodoController.baseUrl,
             statusOptions: TodoStatus,
-            errors
         });
     }
 
@@ -69,9 +65,11 @@ export class TodoController extends BaseController {
         }else{
             let validError: ValidationError = todoOrValidError;
             this.res.format({
-                html: () => { 
+                html: async () => { 
                     if(this.isBodyEmpty()) validError.errors = undefined;
-                    this.add(validError)
+                    this.req.session.alert = {errors: ValidationErrorUtils.itemToStringArray(validError.errors)};
+                    await this.saveSession();
+                    this.res.redirect(TodoController.pathJoin('add'));                    
                 },
                 json: () => { this.next(new BadRequestError(ValidationErrorUtils.itemToString(validError.errors))) }
             });    
@@ -87,8 +85,7 @@ export class TodoController extends BaseController {
         })
     }
 
-    public async edit(validError?: ValidationError) {
-        let errors = validError ? validError.errors : undefined;
+    public async edit() {
         let todo = this.req.todo;
 
         this.render('todo/form', {
@@ -97,7 +94,6 @@ export class TodoController extends BaseController {
             statusOptions: TodoStatus,
             todo,
             method: HttpMethod.PATCH,
-            errors
         });
     }
 
@@ -119,9 +115,11 @@ export class TodoController extends BaseController {
         }else{
             let validError: ValidationError = todoOrValidError;
             this.res.format({
-                html: () => { 
+                html: async () => { 
                     if(this.isBodyEmpty()) validError.errors = undefined;
-                    this.edit(validError)
+                    this.req.session.alert = {errors: ValidationErrorUtils.itemToStringArray(validError.errors)};
+                    await this.saveSession();
+                    this.res.redirect(TodoController.pathJoin(todo.id.toString(), 'edit'));
                 },
                 json: () => { this.next(new BadRequestError(ValidationErrorUtils.itemToString(validError.errors))) }
             });    
@@ -131,10 +129,12 @@ export class TodoController extends BaseController {
     public async delete() {
         let todo: Todo = this.req.todo;
         await todo.destroy().catch(this.next);
-        this.res.locals.alert = { status: "success", message: "Todo item deleted !" };
+
+        this.req.session.alert = {successes: [] = ["Todo item deleted !"]};
+        await this.saveSession();
 
         this.res.format({
-            html: () => { this.index() },
+            html: () => { this.res.redirect(TodoController.pathJoin()); },
             json: () => { this.res.status(204); this.res.end() }
         })
     }
