@@ -28,6 +28,8 @@ export class TeamController extends BaseController {
         let teamOrValidError: ValidationError|Team = await team.save().catch((err) => {return err});
 
         if(teamOrValidError instanceof Team){
+            await team.$add('user', await this.getUser());
+
             this.res.format({
                 html: () => { this.res.redirect('/'); },
                 json: () => { this.res.send({team: teamOrValidError}); }
