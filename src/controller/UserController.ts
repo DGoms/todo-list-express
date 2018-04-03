@@ -17,6 +17,7 @@ export class UserController extends BaseController {
         { httpMethod: HttpMethod.ALL, path: '/login', action: 'login', root: true },
         { httpMethod: HttpMethod.ALL, path: '/register', action: 'register', root: true },
         { httpMethod: HttpMethod.ALL, path: '/logout', action: 'logout', root: true },
+        { httpMethod: HttpMethod.GET, path: '/me', action: 'showMe' },
     ]
 
     public async login() {
@@ -62,5 +63,11 @@ export class UserController extends BaseController {
     public logout() {
         this.setUser();
         this.res.redirect('/');
+    }
+
+    public showMe(){
+        this.res.format({
+            json: async () => {this.res.send(await this.getUser())}
+        });
     }
 }

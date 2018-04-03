@@ -5,6 +5,7 @@ import * as session from 'express-session';
 import { HttpError, ServerError, NotFoundError, BadRequestError } from '../utils/Error';
 import { BaseController, TodoController, UserController, DefaultController, TeamController } from '../controller';
 import { Todo, User, Team } from '../models';
+import { MyRequest } from '../utils';
 
 /**
  * Les options de lancement du serveur
@@ -127,12 +128,15 @@ export class Server {
         for (let model of Server.models) {
             let modelName = model.name.toLowerCase();
             router.param(modelName, (req: any, res: express.Response, next: express.NextFunction, id) => {
+                if(!req.data)
+                    req.data = {};
+
                 let _id = +id;
                 if (_id != id) return next(new BadRequestError('Id should be a number'))
 
                 model.scope('full').findById(id).then((item: any) => {
                     if (!item) return next(new NotFoundError())
-                    req[modelName] = item;
+                    req.data[modelName] = item;
                     next();
                 }).catch(next);
             });

@@ -1,6 +1,6 @@
 import * as Path from 'path';
 import { Todo } from "../models/Todo";
-import { BadRequestError, TodoStatus, TodoStatusUtil, ValidationErrorUtils } from "../utils";
+import { BadRequestError, TodoStatus, TodoStatusUtil, ValidationErrorUtils, UnauthorizedError } from "../utils";
 import { BaseController, IRoute, HttpMethod } from ".";
 import { ValidationError, ValidationErrorItem } from 'sequelize';
 import { Team, User } from '../models';
@@ -14,6 +14,7 @@ export class TodoController extends BaseController {
         { httpMethod: HttpMethod.GET, path: '/me', action: 'listOfUser' },
         { httpMethod: HttpMethod.GET, path: '/add', action: 'add' },
         { httpMethod: HttpMethod.POST, path: '/', action: 'create' },
+        { httpMethod: HttpMethod.ALL, path: '/:todo', action: 'checkAuthorized' },
         { httpMethod: HttpMethod.GET, path: '/:todo', action: 'show' },
         { httpMethod: HttpMethod.GET, path: '/:todo/edit', action: 'edit' },
         { httpMethod: HttpMethod.ALL, path: '/:todo/check', action: 'checkTodo' },
@@ -105,9 +106,9 @@ export class TodoController extends BaseController {
         }
     }
 
-    public show() {
-        let todo = this.req.todo;
-
+    public async show() {
+        let todo = this.req.data.todo;
+            
         this.res.format({
             html: () => { this.render('todo/show', { todo }) },
             json: () => { this.res.send({ todo }) }
@@ -115,7 +116,7 @@ export class TodoController extends BaseController {
     }
 
     public async edit() {
-        let todo = this.req.todo;
+        let todo = this.req.data.todo;
 
         this.render('todo/form', {
             title: "Edit todo",
@@ -127,7 +128,7 @@ export class TodoController extends BaseController {
     }
 
     public async update() {
-        let todo = this.req.todo;
+        let todo = this.req.data.todo;
         let message: string = this.req.body.message;
         let completion: TodoStatus = TodoStatusUtil.toEnum(this.req.body.completion) || TodoStatus.TODO;
 
@@ -156,7 +157,7 @@ export class TodoController extends BaseController {
     }
 
     public async checkTodo(){
-        let todo: Todo = this.req.todo;
+        let todo: Todo = this.req.data.todo;
         let completion = TodoStatusUtil.toEnum(todo.completion);
 
         if(completion == TodoStatus.DONE){
@@ -170,7 +171,7 @@ export class TodoController extends BaseController {
     }
 
     public async delete() {
-        let todo: Todo = this.req.todo;
+        let todo: Todo = this.req.data.todo;
         await todo.destroy().catch(this.next);
 
         this.req.session.alert = {successes: [] = ["Todo item deleted !"]};
@@ -180,5 +181,17 @@ export class TodoController extends BaseController {
             html: () => { this.res.redirect(TodoController.pathJoin()); },
             json: () => { this.res.status(204); this.res.end() }
         })
+    }
+
+    public async checkAuthorized(){
+        let user = await this.getUser();
+        let todo = this.req.data.todo;
+
+        if(todo.user.teamId != user.teamId && todo.userId != user.id){
+            this.next(new UnauthorizedError());
+        }
+        else{
+            this.next();
+        }
     }
 }

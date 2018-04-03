@@ -14,10 +14,10 @@ export class TeamController extends BaseController {
 
     protected static baseUrl: string = '/team';
     protected static routes: IRoute[] = [
-        { httpMethod: HttpMethod.GET, path: '/create', action: 'formCreate' },
+        // { httpMethod: HttpMethod.GET, path: '/create', action: 'formCreate' },
         { httpMethod: HttpMethod.POST, path: '/', action: 'create' },
         { httpMethod: HttpMethod.GET, path: '/:team', action: 'show' },
-        { httpMethod: HttpMethod.GET, path: '/:team/add', action: 'formAddUser' },
+        // { httpMethod: HttpMethod.GET, path: '/:team/add', action: 'formAddUser' },
         { httpMethod: HttpMethod.PUT, path: '/:team/:user', action: 'addUser' },
         { httpMethod: HttpMethod.DELETE, path: '/:team/:user', action: 'delUser' },
     ];
@@ -45,7 +45,7 @@ export class TeamController extends BaseController {
     }
 
     public show() {
-        let team = this.req.team;
+        let team = this.req.data.team;
 
         this.res.format({
             // html: () => { this.render('todo/show', { todo }) },
@@ -54,13 +54,28 @@ export class TeamController extends BaseController {
     }
 
     public async addUser(){
-        let team = this.req.team;
+        let team = this.req.data.team;
 
         if(!team.users)
             this.next(new ServerError());
         
-        if(team.users.indexOf(this.req.user) < 0)
-            await team.$add('user', this.req.user).catch(this.next);
+        if(!(await team.$has('user', this.req.data.user)))
+            await team.$add('user', this.req.data.user).catch(this.next);
+
+        this.res.format({
+            html: () => { this.res.redirect('/'); },
+            json: () => { this.res.sendStatus(204); }
+        });
+    }
+
+    public async delUser(){
+        let team = this.req.data.team;
+
+        if(!team.users)
+            this.next(new ServerError());
+
+        if(await team.$has('user', this.req.data.user))
+            await team.$remove('user', this.req.data.user).catch(this.next);
 
         this.res.format({
             html: () => { this.res.redirect('/'); },

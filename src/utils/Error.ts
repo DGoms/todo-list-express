@@ -36,3 +36,11 @@ export class ServerError extends HttpError {
         this.type = type
     }
 }
+
+export class UnauthorizedError extends HttpError{
+    constructor(message = 'Unauthorized Error', type = 'UNAUHTHORIZED_ERROR') {
+        super(message)
+        this.status = 401
+        this.type = type
+    }
+}
