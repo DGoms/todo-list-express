@@ -21,18 +21,21 @@ export class UserController extends BaseController {
     ]
 
     public async login() {
-        let errors: any[] = [];
+        let error: string = "Wrong username or password";
 
         if (this.req.body.username && this.req.body.password) {
-            if(await this.checkAndSetUser(this.req.body.username, this.req.body.password))
+            if(await this.checkAndSetUser(this.req.body.username, this.req.body.password)){
                 this.res.redirect('/');
-            else
-                errors.push({ message: "Wrong username or password" });
+                return;
+            }
         }
 
         this.res.format({
-            html: () => { this.render('user/form', { submit: "Login", errors }) },
-            json: () => { this.next(new BadRequestError(ValidationErrorUtils.itemToString(errors))) }
+            html: () => { 
+                if(!this.isBodyEmpty()) this.req.session.alert.errors = [error];
+                this.render('user/form', { submit: "Login" }) 
+            },
+            json: () => { this.next(new BadRequestError(error)) }
         })
     }
 
@@ -52,8 +55,8 @@ export class UserController extends BaseController {
             let validError: ValidationError = userOrValidError;
             this.res.format({
                 html: () => { 
-                    if(this.isBodyEmpty()) validError.errors = undefined;
-                    this.render('user/register', { submit: "Register", user, errors: validError.errors }) 
+                    if(!this.isBodyEmpty()) this.req.session.alert.errors = ValidationErrorUtils.itemToStringArray(validError.errors);
+                    this.render('user/form', { submit: "Register", user }) 
                 },
                 json: () => { this.next(new BadRequestError(ValidationErrorUtils.itemToString(validError.errors))) }
             });    

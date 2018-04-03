@@ -7,7 +7,7 @@ let server = new Server();
 let db = new Db();
 db.sync().then(async () => {
     
-    await dataTest();
+    // await dataTest();
     server.start();
 });
 

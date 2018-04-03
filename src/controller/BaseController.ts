@@ -92,8 +92,6 @@ export abstract class BaseController {
         this.res = res;
         this.next = next;
 
-//TODO
-this.setUser(1);
         let _this: any = this;
         _this[action]();
     }
