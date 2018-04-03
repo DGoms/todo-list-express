@@ -3,6 +3,7 @@ import { Todo } from "../models/Todo";
 import { BadRequestError, TodoStatus, TodoStatusUtil, ValidationErrorUtils } from "../utils";
 import { BaseController, IRoute, HttpMethod } from ".";
 import { ValidationError, ValidationErrorItem } from 'sequelize';
+import { Team, User } from '../models';
 
 export class TodoController extends BaseController {
 
@@ -22,7 +23,7 @@ export class TodoController extends BaseController {
 
     public async listOfTeam() {
         let user = await this.getUser();
-        if(!user.team){
+        if(!user.teamId){
             this.listOfUser();
         }else{
             let limit = +this.req.query.limit || 25;
@@ -31,11 +32,14 @@ export class TodoController extends BaseController {
             let completion = this.req.query.completion;
 
             let where:any = {};
-            where['teamId'] = user.teamId;
             if (completion)
                 where['completion'] = completion;
 
-            let todos = await Todo.findAll({ limit, offset, where }).catch(this.next);
+            let include = [
+                {model: User, include: [{model: Team, where: { id: user.teamId }}]}
+            ];
+
+            let todos = await Todo.findAll({ limit, offset, where, include }).catch(this.next);
 
             this.res.format({
                 html: () => { this.render('todo/list', { todos, alert: this.res.locals.alert }) },

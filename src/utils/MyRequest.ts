@@ -1,9 +1,10 @@
 import { Request } from "express";
-import { Todo, User } from '../models';
+import { Todo, User, Team } from '../models';
 
 export interface MyRequest extends Request{
     todo?: Todo,
     user?: User,
+    team?: Team,
     session?: MySession,
 }
 

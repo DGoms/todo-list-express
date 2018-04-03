@@ -8,7 +8,10 @@ import { Todo, Team } from '../models';
 })
 @Scopes({
     full: {
-        include: [() => Todo, () => Team]
+        include: [() => Team, () => Todo]
+    },
+    todo: {
+        include: [() => Todo]
     }
 })
 export class User extends Model<User>{
